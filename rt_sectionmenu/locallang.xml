@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<T3locallang>
+	<meta type="array">
+		<type>module</type>
+		<description>Language labels for extension 'rt_sectionmenu'</description>
+	</meta>
+	<data type="array">
+		<languageKey index="default" type="array">
+			<label index="pi1_title">Section menu</label>
+			<label index="pi1_plus_wiz_description">Section menu</label>
+		</languageKey>
+		<languageKey index="fr" type="array">
+			<label index="pi1_title">Menu de sections</label>
+			<label index="pi1_plus_wiz_description">Menu de sections</label>
+		</languageKey>
+	</data>
+</T3locallang>
