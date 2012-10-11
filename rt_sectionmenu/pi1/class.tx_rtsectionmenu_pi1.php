@@ -156,6 +156,8 @@ class tx_rtsectionmenu_pi1 extends tslib_pibase {
 				}
 			}
 			
+			//$menuwrap .= t3lib_utility_Debug::viewArray($contents_array) . "<br />";
+			
 			$contents = implode(',', $contents_array);
 			
 			//Get the contents information for the contents of this page
@@ -164,25 +166,29 @@ class tx_rtsectionmenu_pi1 extends tslib_pibase {
 			$contents_info_orderby = "FIND_IN_SET(`uid`, '".$contents."')";
 			$contents_info_array = $this->getMultiDbRecords($fields, $contents_table, $contents_info_where_clause, '', $contents_info_orderby); 
 			
-			
 			//If there is any contents in the page
 			if($contents_info_array) {
 			
 				//FCE container uid search and replace by inside content uid
+				
 				foreach($contents_info_array as $info) {
 					if($info['CType'] == 'templavoila_pi1') {
 						$fce_content_xml_array = t3lib_div::xml2array($info['tx_templavoila_flex']);
-						$fce_content_uid_array = explode(',', $fce_content_xml_array['data']['sDEF']['lDEF'][$current_TV_Field]['vDEF']);
-						$position = array_search($info['uid'], $contents_array);
-						array_splice($contents_array, $position, 0, $fce_content_uid_array);
-						unset($contents_array[array_search($info['uid'], $contents_array)]);
+						foreach($fce_content_xml_array['data']['sDEF']['lDEF'] as $key=>$value) {
+							if($key==$current_TV_Field) {
+								$fce_content_uid_array = explode(',', $fce_content_xml_array['data']['sDEF']['lDEF'][$current_TV_Field]['vDEF']);
+								$position = array_search($info['uid'], $contents_array);
+								array_splice($contents_array, $position, 0, $fce_content_uid_array);
+								unset($contents_array[array_search($info['uid'], $contents_array)]);
+							}
+						}
 					}
 				}
 				
 				$contents = implode(',', $contents_array);
-			
+				
 				//Get the contents information for the real contents of this page
-				$fields = array('uid','l18n_parent','header');
+				$fields = array('uid','l18n_parent','header','sectionIndex');
 				$real_contents_where_clause = "FIND_IN_SET(`uid`, '".$contents."')" . $this->cObj->enableFields($contents_table);
 				$real_contents_orderby = "FIND_IN_SET(`uid`, '".$contents."')";
 				$real_contents_array = $this->getMultiDbRecords($fields, $contents_table, $real_contents_where_clause, '', $real_contents_orderby); 
@@ -195,20 +201,24 @@ class tx_rtsectionmenu_pi1 extends tslib_pibase {
 	
 					//If current Language is not default
 					if($real_info['l18n_parent'] != $current_language) {
-						$fields = array('uid','header');
-						$real_contents_altlang_where_clause = "`l18n_parent`= " .$real_info['uid'] . $this->cObj->enableFields($contents_table);
-						$real_contents_altlang_array = $this->getMultiDbRecords($fields, $contents_table, $real_contents_altlang_where_clause, '', '', '', false); 
+						$fields = array('uid','header','sectionIndex');
+						$real_contents_altlang_where_clause = "`l18n_parent`= " .$real_info['uid'] . " AND `sectionIndex`=1". $this->cObj->enableFields($contents_table);
+						$real_contents_altlang_array = $this->getMultiDbRecords($fields, $contents_table, $real_contents_altlang_where_clause); 
+
 						//Contents uid and header search and replace by alternative items
 						$real_contents_array[$i]['uid'] = $real_contents_altlang_array[0]['uid'];
 						$real_contents_array[$i]['header'] = $real_contents_altlang_array[0]['header'];
+						$real_contents_array[$i]['sectionIndex'] = $real_contents_altlang_array[0]['sectionIndex'];
 					}
-					//Section menu link
-					$section_lnk = t3lib_div::getIndpEnv('TYPO3_SITE_URL').$this->pi_getPageLink($entrypoint).'#c'.$real_contents_array[$i]['uid'];
-					//Section index menu construction
-					$menuwrap .= '<li>';
-					$menuwrap .= '<i class="icon-circle-arrow-down" style="vertical-align:middle"></i>&nbsp;&nbsp;';
-					$menuwrap .= '<a href="'.$section_lnk.'" target="_top">'.$real_contents_array[$i]['header'].'</a>';
-					$menuwrap .= '</li>';
+					if($real_contents_array[$i]['sectionIndex'] == 1) {
+						//Section menu link
+						$section_lnk = t3lib_div::getIndpEnv('TYPO3_SITE_URL').$this->pi_getPageLink($entrypoint).'#c'.$real_contents_array[$i]['uid'];
+						//Section index menu construction
+						$menuwrap .= '<li>';
+						$menuwrap .= '<i class="icon-circle-arrow-down" style="margin-top:0;"></i>&nbsp;&nbsp;';
+						$menuwrap .= '<a href="'.$section_lnk.'" target="_top">'.$real_contents_array[$i]['header'].'</a>';
+						$menuwrap .= '</li>';
+					}
 					$i++;
 				}
 				$menuwrap .= '</ul></div>';
